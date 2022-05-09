@@ -1,0 +1,66 @@
+{
+  "name": "gewerk/non-propagated-tags",
+  "description": "Adds a field for non-propagated tags, so tags will be saved only to the current site",
+  "type": "craft-plugin",
+  "version": "1.0.0",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "gewerk",
+      "email": "support@gewerk.dev",
+      "homepage": "https://gewerk.dev/"
+    },
+    {
+      "name": "Dennis Morhardt",
+      "email": "info@dennismorhardt.de",
+      "homepage": "https://dennismorhardt.de/"
+    }
+  ],
+  "support": {
+    "email": "support@gewerk.dev",
+    "issues": "https://github.com/gewerk/non-propagated-tags/issues?state=open",
+    "source": "https://github.com/gewerk/non-propagated-tags",
+    "docs": "https://github.com/gewerk/non-propagated-tags",
+    "rss": "https://github.com/gewerk/non-propagated-tags/commits/v2.atom"
+  },
+  "require": {
+    "craftcms/cms": "^3.7"
+  },
+  "require-dev": {
+    "dealerdirect/phpcodesniffer-composer-installer": "^0.7.1",
+    "squizlabs/php_codesniffer": "^3.5",
+    "yiisoft/yii2-coding-standards": "^2.0"
+  },
+  "config": {
+    "sort-packages": true,
+    "optimize-autoloader": true,
+    "platform": {
+      "php": "7.2.5"
+    },
+    "allow-plugins": {
+      "yiisoft/yii2-composer": false,
+      "craftcms/plugin-installer": false,
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Gewerk\\NonPropagatedTags\\": "src/"
+    }
+  },
+  "extra": {
+    "name": "Non-Propagated Tags",
+    "handle": "non-propagated-tags",
+    "documentationUrl": "https://gewerk.dev/plugins/non-propagated-tags",
+    "changelogUrl": "https://raw.githubusercontent.com/gewerk/non-propagated-tags/main/CHANGELOG.md",
+    "class": "Gewerk\\NonPropagatedTags\\NonPropagatedTags"
+  },
+  "scripts": {
+    "install-codestandards": [
+      "Dealerdirect\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\Plugin::run"
+    ],
+    "post-install-cmd": [
+      "@install-codestandards"
+    ]
+  }
+}
