@@ -35,9 +35,11 @@ class NonPropagatedTag extends Tag
     {
         // Save tag only to current site
         return [
-            'siteId' => $this->siteId,
-            'propagate' => true,
-            'enabledByDefault' => true,
+            [
+                'siteId' => $this->siteId,
+                'propagate' => true,
+                'enabledByDefault' => true,
+            ],
         ];
     }
 }
