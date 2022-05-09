@@ -2,7 +2,7 @@
   "name": "gewerk/non-propagated-tags",
   "description": "Adds a field for non-propagated tags, so tags will be saved only to the current site",
   "type": "craft-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "MIT",
   "authors": [
     {
