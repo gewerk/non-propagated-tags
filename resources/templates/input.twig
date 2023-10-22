@@ -1,3 +1,5 @@
+{% do view.registerAssetBundle('Gewerk\\NonPropagatedTags\\AssetBundle\\NonPropagatedTagSelectInputAssetBundle') %}
+
 {% if name is defined and name %}
   {{ hiddenInput(name, '') }}
 {% endif -%}
@@ -19,8 +21,8 @@
     {{ text({
       width: 'auto',
       placeholder: selectionLabel,
+      describedBy: describedBy ?? false,
     }) }}
-
     <div class="spinner hidden"></div>
   </div>
 </div>
@@ -30,7 +32,8 @@
   name: name|namespaceInputName,
   tagGroupId: tagGroupId,
   sourceElementId: sourceElementId ?: null,
-  targetSiteId: targetSiteId
+  siteId: siteId,
+  allowSelfRelations: allowSelfRelations ?? false,
 } %}
 
 {% js %}

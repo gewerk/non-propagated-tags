@@ -24,22 +24,23 @@
     "rss": "https://github.com/gewerk/non-propagated-tags/commits/v2.atom"
   },
   "require": {
-    "craftcms/cms": "^3.7"
+    "php": "^8.0.2",
+    "craftcms/cms": "^4.0.0"
   },
   "require-dev": {
-    "dealerdirect/phpcodesniffer-composer-installer": "^0.7.1",
-    "squizlabs/php_codesniffer": "^3.5",
-    "yiisoft/yii2-coding-standards": "^2.0"
+    "craftcms/ecs": "dev-main",
+    "craftcms/phpstan": "dev-main",
+    "craftcms/rector": "dev-main"
   },
   "config": {
     "sort-packages": true,
     "optimize-autoloader": true,
     "platform": {
-      "php": "7.2.5"
+      "php": "8.0.2"
     },
     "allow-plugins": {
-      "yiisoft/yii2-composer": false,
-      "craftcms/plugin-installer": false,
+      "yiisoft/yii2-composer": true,
+      "craftcms/plugin-installer": true,
       "dealerdirect/phpcodesniffer-composer-installer": true
     }
   },
@@ -54,13 +55,5 @@
     "documentationUrl": "https://gewerk.dev/plugins/non-propagated-tags",
     "changelogUrl": "https://raw.githubusercontent.com/gewerk/non-propagated-tags/main/CHANGELOG.md",
     "class": "Gewerk\\NonPropagatedTags\\NonPropagatedTags"
-  },
-  "scripts": {
-    "install-codestandards": [
-      "Dealerdirect\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\Plugin::run"
-    ],
-    "post-install-cmd": [
-      "@install-codestandards"
-    ]
   }
 }

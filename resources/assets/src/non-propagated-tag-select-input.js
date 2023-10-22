@@ -24,13 +24,7 @@ Craft.NonPropagatedTagSelectInput = Craft.BaseElementSelectInput.extend(
       if (!$.isPlainObject(settings)) {
         // Loop through all of the old arguments and apply them to the settings
         var normalizedSettings = {},
-          args = [
-            'id',
-            'name',
-            'tagGroupId',
-            'targetSiteId',
-            'sourceElementId',
-          ];
+          args = ['id', 'name', 'tagGroupId', 'siteId', 'sourceElementId'];
 
         for (var i = 0; i < args.length; i++) {
           if (typeof arguments[i] !== 'undefined') {
@@ -173,66 +167,72 @@ Craft.NonPropagatedTagSelectInput = Craft.BaseElementSelectInput.extend(
           }
         }
 
-        if (this.settings.sourceElementId) {
+        // take allowSelfRelations into consideration too
+        if (
+          this.settings.sourceElementId &&
+          !this.settings.allowSelfRelations
+        ) {
           excludeIds.push(this.settings.sourceElementId);
         }
 
         var data = {
           search: this.$addTagInput.val(),
           tagGroupId: this.settings.tagGroupId,
-          siteId: this.settings.targetSiteId,
+          siteId: this.settings.siteId,
           excludeIds: excludeIds,
         };
 
-        Craft.postActionRequest(
+        Craft.sendActionRequest(
+          'POST',
           'non-propagated-tags/input/search-for-tags',
-          data,
-          (response, textStatus) => {
+          { data },
+        )
+          .then((response) => {
+            if (this.searchMenu) {
+              this.killSearchMenu();
+            }
+            this.$spinner.addClass('hidden');
+            var $menu = $('<div class="menu tagmenu"/>').appendTo(Garnish.$bod),
+              $ul = $('<ul/>').appendTo($menu);
+
+            var $li;
+
+            for (var i = 0; i < response.data.tags.length; i++) {
+              $li = $('<li/>').appendTo($ul);
+
+              $('<a data-icon="tag"/>')
+                .appendTo($li)
+                .text(response.data.tags[i].title)
+                .data('id', response.data.tags[i].id)
+                .addClass(response.data.tags[i].exclude ? 'disabled' : '');
+            }
+
+            if (!response.data.exactMatch) {
+              $li = $('<li/>').appendTo($ul);
+              $('<a data-icon="plus"/>').appendTo($li).text(data.search);
+            }
+
+            $ul.find('a:not(.disabled):first').addClass('hover');
+
+            this.searchMenu = new Garnish.Menu($menu, {
+              attachToElement: this.$addTagInput,
+              onOptionSelect: this.selectTag.bind(this),
+            });
+
+            this.addListener($menu, 'mousedown', () => {
+              this._ignoreBlur = true;
+            });
+
+            this.searchMenu.show();
+          })
+          .catch(() => {
             // Just in case
             if (this.searchMenu) {
               this.killSearchMenu();
             }
 
             this.$spinner.addClass('hidden');
-
-            if (textStatus === 'success') {
-              var $menu = $('<div class="menu tagmenu"/>').appendTo(
-                  Garnish.$bod,
-                ),
-                $ul = $('<ul/>').appendTo($menu);
-
-              var $li;
-
-              for (var i = 0; i < response.tags.length; i++) {
-                $li = $('<li/>').appendTo($ul);
-
-                $('<a data-icon="tag"/>')
-                  .appendTo($li)
-                  .text(response.tags[i].title)
-                  .data('id', response.tags[i].id)
-                  .addClass(response.tags[i].exclude ? 'disabled' : '');
-              }
-
-              if (!response.exactMatch) {
-                $li = $('<li/>').appendTo($ul);
-                $('<a data-icon="plus"/>').appendTo($li).text(data.search);
-              }
-
-              $ul.find('a:not(.disabled):first').addClass('hover');
-
-              this.searchMenu = new Garnish.Menu($menu, {
-                attachToElement: this.$addTagInput,
-                onOptionSelect: this.selectTag.bind(this),
-              });
-
-              this.addListener($menu, 'mousedown', () => {
-                this._ignoreBlur = true;
-              });
-
-              this.searchMenu.show();
-            }
-          },
-        );
+          });
       } else {
         this.$spinner.addClass('hidden');
       }
@@ -251,7 +251,7 @@ Craft.NonPropagatedTagSelectInput = Craft.BaseElementSelectInput.extend(
       var $element = $('<div/>', {
         class: 'element small removable',
         'data-id': id,
-        'data-site-id': this.settings.targetSiteId,
+        'data-site-id': this.settings.siteId,
         'data-label': title,
         'data-editable': '1',
       }).appendTo(this.$elementsContainer);
@@ -262,9 +262,13 @@ Craft.NonPropagatedTagSelectInput = Craft.BaseElementSelectInput.extend(
         value: id,
       }).appendTo($element);
 
-      $('<a/>', {
+      $('<button/>', {
         class: 'delete icon',
         title: Craft.t('app', 'Remove'),
+        type: 'button',
+        'aria-label': Craft.t('app', 'Remove {label}', {
+          label: title,
+        }),
       }).appendTo($element);
 
       var $titleContainer = $('<div/>', {
@@ -275,13 +279,6 @@ Craft.NonPropagatedTagSelectInput = Craft.BaseElementSelectInput.extend(
         class: 'title',
         text: title,
       }).appendTo($titleContainer);
-
-      var margin = -($element.outerWidth() + 10);
-      this.$addTagInput.css('margin-' + Craft.left, margin + 'px');
-
-      var animateCss = {};
-      animateCss['margin-' + Craft.left] = 0;
-      this.$addTagInput.velocity(animateCss, 'fast');
 
       this.$elements = this.$elements.add($element);
 
@@ -297,31 +294,25 @@ Craft.NonPropagatedTagSelectInput = Craft.BaseElementSelectInput.extend(
 
         var data = {
           groupId: this.settings.tagGroupId,
-          siteId: this.settings.targetSiteId,
+          siteId: this.settings.siteId,
           title: title,
         };
 
-        Craft.postActionRequest(
+        Craft.sendActionRequest(
+          'POST',
           'non-propagated-tags/input/create-tag',
-          data,
-          (response, textStatus) => {
-            if (textStatus === 'success' && response.success) {
-              $element.attr('data-id', response.id);
-              $input.val(response.id);
+          { data },
+        )
+          .then((response) => {
+            $element.attr('data-id', response.data.id);
+            $input.val(response.data.id);
 
-              $element.removeClass('loading disabled');
-            } else {
-              this.removeElement($element);
-
-              if (textStatus === 'success') {
-                // Some sort of validation error that still resulted in  a 200 response. Shouldn't be possible though.
-                Craft.cp.displayError(
-                  Craft.t('app', 'A server error occurred.'),
-                );
-              }
-            }
-          },
-        );
+            $element.removeClass('loading disabled');
+          })
+          .catch(() => {
+            this.removeElement($element);
+            Craft.cp.displayError(Craft.t('app', 'A server error occurred.'));
+          });
       }
     },
 

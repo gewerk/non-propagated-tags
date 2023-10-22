@@ -40,10 +40,13 @@ class InputController extends Controller
         $excludeIds = $this->request->getBodyParam('excludeIds', []);
         $allowSimilarTags = Craft::$app->getConfig()->getGeneral()->allowSimilarTags;
 
+        /** @var NonPropagatedTag[] $tags */
         $tags = NonPropagatedTag::find()
             ->siteId($siteId)
             ->groupId($tagGroupId)
             ->title(Db::escapeParam($search) . '*')
+            ->orderBy(['LENGTH([[title]])' => SORT_ASC])
+            ->limit(5)
             ->all();
 
         $return = [];
@@ -120,13 +123,10 @@ class InputController extends Controller
 
         // Don't validate required custom fields
         if (!Craft::$app->getElements()->saveElement($tag)) {
-            return $this->asJson([
-                'success' => false,
-            ]);
+            return $this->asFailure();
         }
 
-        return $this->asJson([
-            'success' => true,
+        return $this->asSuccess(data: [
             'id' => $tag->id,
         ]);
     }

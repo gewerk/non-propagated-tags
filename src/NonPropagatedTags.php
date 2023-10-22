@@ -66,9 +66,9 @@ class NonPropagatedTags extends Plugin
         Event::on(
             View::class,
             View::EVENT_REGISTER_CP_TEMPLATE_ROOTS,
-            function (RegisterTemplateRootsEvent $event) {
+            function(RegisterTemplateRootsEvent $event) {
                 $event->roots['non-propagated-tags'] = Craft::getAlias(
-                    '@non-propagated-tags/resources/templates'
+                    '@non-propagated-tags/resources/templates',
                 );
             }
         );
@@ -77,7 +77,7 @@ class NonPropagatedTags extends Plugin
         Event::on(
             Fields::class,
             Fields::EVENT_REGISTER_FIELD_TYPES,
-            function (RegisterComponentTypesEvent $event) {
+            function(RegisterComponentTypesEvent $event) {
                 $event->types[] = Field\NonPropagatedTags::class;
             }
         );
@@ -86,7 +86,7 @@ class NonPropagatedTags extends Plugin
         Event::on(
             CraftVariable::class,
             CraftVariable::EVENT_DEFINE_BEHAVIORS,
-            function (DefineBehaviorsEvent $event) {
+            function(DefineBehaviorsEvent $event) {
                 /** @var CraftVariable */
                 $sender = $event->sender;
                 $sender->attachBehaviors([

@@ -11,9 +11,9 @@ namespace Gewerk\NonPropagatedTags\Field;
 use Craft;
 use craft\base\ElementInterface;
 use craft\elements\db\ElementQueryInterface;
+use craft\elements\ElementCollection;
 use craft\fields\Tags;
 use craft\models\TagGroup;
-use Gewerk\NonPropagatedTags\AssetBundle\NonPropagatedTagSelectInputAssetBundle;
 use Gewerk\NonPropagatedTags\Element\NonPropagatedTag;
 use Gewerk\NonPropagatedTags\Element\Query\NonPropagatedTagQuery;
 
@@ -25,9 +25,9 @@ use Gewerk\NonPropagatedTags\Element\Query\NonPropagatedTagQuery;
 class NonPropagatedTags extends Tags
 {
     /**
-     * @var string|null
+     * @var string|false
      */
-    private $tagGroupId = null;
+    private string|false $tagGroupUid;
 
     /**
      * @inheritdoc
@@ -40,7 +40,7 @@ class NonPropagatedTags extends Tags
     /**
      * @inheritdoc
      */
-    protected static function elementType(): string
+    public static function elementType(): string
     {
         return NonPropagatedTag::class;
     }
@@ -50,21 +50,21 @@ class NonPropagatedTags extends Tags
      */
     public static function valueType(): string
     {
-        return NonPropagatedTagQuery::class;
+        return sprintf('\\%s|\\%s<\\%s>', NonPropagatedTagQuery::class, ElementCollection::class, NonPropagatedTag::class);
     }
 
     /**
      * @inheritdoc
      */
-    protected function inputHtml($value, ElementInterface $element = null): string
+    protected function inputHtml(mixed $value, ?ElementInterface $element = null): string
     {
         if ($element !== null && $element->hasEagerLoadedElements($this->handle)) {
-            $value = $element->getEagerLoadedElements($this->handle);
+            $value = $element->getEagerLoadedElements($this->handle)->all();
         }
 
         if ($value instanceof ElementQueryInterface) {
             $value = $value
-                ->anyStatus()
+                ->status(null)
                 ->all();
         } elseif (!is_array($value)) {
             $value = [];
@@ -73,23 +73,20 @@ class NonPropagatedTags extends Tags
         $tagGroup = $this->getTagGroup();
 
         if ($tagGroup) {
-            $view = Craft::$app->getView();
-            $view->registerAssetBundle(NonPropagatedTagSelectInputAssetBundle::class);
-
-            return $view->renderTemplate(
-                'non-propagated-tags/input',
+            return Craft::$app->getView()->renderTemplate(
+                'non-propagated-tags/input.twig',
                 [
                     'elementType' => static::elementType(),
                     'id' => $this->getInputId(),
+                    'describedBy' => $this->describedBy,
                     'name' => $this->handle,
                     'elements' => $value,
                     'tagGroupId' => $tagGroup->id,
-                    'targetSiteId' => $this->targetSiteId($element),
-                    'sourceElementId' => $element !== null ? $element->id : null,
-                    'selectionLabel' => $this->selectionLabel ?
-                        Craft::t('site', $this->selectionLabel) :
-                        static::defaultSelectionLabel(),
-                ]
+                    'siteId' => $this->targetSiteId($element),
+                    'sourceElementId' => $element?->id,
+                    'selectionLabel' => $this->selectionLabel ? Craft::t('site', $this->selectionLabel) : static::defaultSelectionLabel(),
+                    'allowSelfRelations' => (bool)$this->allowSelfRelations,
+                ],
             );
         }
 
@@ -101,32 +98,28 @@ class NonPropagatedTags extends Tags
      *
      * @return TagGroup|null
      */
-    private function getTagGroup()
+    private function getTagGroup(): ?TagGroup
     {
-        $tagGroupId = $this->getTagGroupId();
+        $groupUid = $this->getTagGroupUid();
 
-        if ($tagGroupId !== false) {
-            return Craft::$app->getTags()->getTagGroupByUid($tagGroupId);
-        }
-
-        return null;
+        return $groupUid ? Craft::$app->getTags()->getTagGroupByUid($groupUid) : null;
     }
 
     /**
      * Returns the tag group ID this field is associated with.
      *
-     * @return int|false
+     * @return string|null
      */
-    private function getTagGroupId()
+    private function getTagGroupUid(): ?string
     {
-        if ($this->tagGroupId !== null) {
-            return $this->tagGroupId;
+        if (!isset($this->tagGroupUid)) {
+            if (preg_match('/^taggroup:([0-9a-f\-]+)$/', $this->source, $matches)) {
+                $this->tagGroupUid = $matches[1];
+            } else {
+                $this->tagGroupUid = false;
+            }
         }
 
-        if (!preg_match('/^taggroup:([0-9a-f\-]+)$/', $this->source, $matches)) {
-            return $this->tagGroupId = false;
-        }
-
-        return $this->tagGroupId = $matches[1];
+        return $this->tagGroupUid ?: null;
     }
 }

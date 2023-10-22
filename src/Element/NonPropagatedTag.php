@@ -8,8 +8,8 @@
 
 namespace Gewerk\NonPropagatedTags\Element;
 
-use craft\elements\db\ElementQueryInterface;
 use craft\elements\Tag;
+use craft\helpers\UrlHelper;
 use Gewerk\NonPropagatedTags\Element\Query\NonPropagatedTagQuery;
 
 /**
@@ -21,9 +21,20 @@ class NonPropagatedTag extends Tag
 {
     /**
      * @inheritdoc
+     */
+    protected function cpEditUrl(): ?string
+    {
+        return UrlHelper::actionUrl('elements/edit', [
+            'elementId' => $this->id,
+            'siteId' => $this->siteId,
+        ]);
+    }
+
+    /**
+     * @inheritdoc
      * @return NonPropagatedTagQuery
      */
-    public static function find(): ElementQueryInterface
+    public static function find(): NonPropagatedTagQuery
     {
         return new NonPropagatedTagQuery(static::class);
     }

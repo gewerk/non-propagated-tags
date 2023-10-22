@@ -10,7 +10,6 @@ namespace Gewerk\NonPropagatedTags\AssetBundle;
 
 use craft\web\AssetBundle;
 use craft\web\assets\cp\CpAsset;
-use craft\web\View;
 
 /**
  * Asset bundle for tags input
@@ -31,19 +30,4 @@ class NonPropagatedTagSelectInputAssetBundle extends AssetBundle
     public $js = [
         'non-propagated-tag-select-input.js',
     ];
-
-    /**
-     * @inheritdoc
-     */
-    public function registerAssetFiles($view)
-    {
-        /** @var View $view */
-        parent::registerAssetFiles($view);
-
-        // Register translations
-        $view->registerTranslations('app', [
-            'Remove',
-            'A server error occurred.',
-        ]);
-    }
 }
